@@ -51,6 +51,14 @@ export default async function Page({
           Create New Student
         </Link>
       </div>
+      <div className="flex justify-start mt-2">
+        <Link
+          href={"/"}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-900"
+        >
+          Back to Main Page
+        </Link>
+      </div>
       <StudentList initialData={students} />
     </div>
   );
