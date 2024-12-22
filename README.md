@@ -2,7 +2,7 @@
 ## Usage
 1. Clone the repository
 2. Change the directory to the backend folder, `npm install` to install dependencies, then `npm run start:dev` or `npm run start` to start the server.
-3. After the server is started, open a new terminal, and change the directory to the frontend folder.
+3. After the server is started, open a new terminal, and change the directory to the `frontend-page-router/` folder.
 4. Start the front end by `npm run dev`.
 
 ## Functionalities
