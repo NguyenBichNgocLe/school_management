@@ -1,6 +1,6 @@
 // import { ClassList } from "@/components/class-list";
 import { AuthContext } from "@/contexts/auth.context";
-import { Table, Button } from "antd";
+import { Table } from "antd";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";

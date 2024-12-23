@@ -1,19 +1,8 @@
 import { AuthContext } from "@/contexts/auth.context";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useContext, useState } from "react";
 
-interface Student {
-  id: string;
-  studentName: string;
-  className: string;
-}
-
-export interface StudentListProps {
-  initialData: Student[];
-}
-
-export function StudentList(props: StudentListProps) {
+export function StudentList() {
   const { role } = useContext(AuthContext);
   const router = useRouter();
   const [studentSearchString, setStudentSearchString] = useState("");
@@ -25,12 +14,12 @@ export function StudentList(props: StudentListProps) {
   }, [studentSearchString]);
 
   const submitStudentSearchByClassName = useCallback(async () => {
-    router.push(`/student?role=${role}class name=${classNameSearchString}`);
+    router.push(`/student?role=${role}&class name=${classNameSearchString}`);
     setClassNameSearchString("");
   }, [classNameSearchString]);
 
   return (
-    <div>
+    <div className="flex gap-4">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -62,16 +51,6 @@ export function StudentList(props: StudentListProps) {
           onChange={(e) => setClassNameSearchString(e.target.value)}
         />
       </form>
-
-      <ul>
-        {props.initialData.map((s, index) => (
-          <Link key={`student-${index}`} href={`student/${s.id}`}>
-            <li className="hover:bg-slate-400">
-              {s.className} - {s.studentName}
-            </li>
-          </Link>
-        ))}
-      </ul>
     </div>
   );
 }
