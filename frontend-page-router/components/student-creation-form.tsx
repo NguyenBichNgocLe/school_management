@@ -1,7 +1,9 @@
+import { AuthContext } from "@/contexts/auth.context";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 
 export default function StudentCreationForm() {
+  const { role } = useContext(AuthContext);
   const [studentName, setStudentName] = useState("");
   const [className, setClassName] = useState("");
   const router = useRouter();
@@ -10,7 +12,7 @@ export default function StudentCreationForm() {
     const res = await fetch("http://localhost:3000/student", {
       method: "POST",
       headers: [
-        ["Authorization", "Bearer admin"],
+        ["Authorization", `Bearer ${role}`],
         ["Content-Type", "application/json"],
       ],
       body: JSON.stringify({
@@ -21,7 +23,7 @@ export default function StudentCreationForm() {
 
     const resContent = await res.json();
     if (res.ok) {
-      router.replace("/student");
+      router.replace(`/student?role=${role}`);
       return;
     }
 

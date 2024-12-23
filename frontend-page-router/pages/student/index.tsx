@@ -1,6 +1,9 @@
 import { StudentList } from "@/components/student-list";
+import { AuthContext } from "@/contexts/auth.context";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useContext, useEffect } from "react";
 
 interface Student {
   id: string;
@@ -11,6 +14,16 @@ interface Student {
 export default function Page({
   students,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const router = useRouter();
+  const { role } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (role == null) {
+      alert("Please select a role");
+      router.replace("/");
+    }
+  });
+
   return (
     <div>
       <h1 className="text-2xl font-bold">All students</h1>
@@ -38,6 +51,7 @@ export default function Page({
 export const getServerSideProps = (async ({ query }) => {
   let students: Student[] = [];
 
+  const role = query["role"];
   const studentName = query["student name"];
   const className = query["class name"];
 
@@ -46,7 +60,7 @@ export const getServerSideProps = (async ({ query }) => {
       `http://localhost:3000/student/usingName?searchString=${studentName}`,
       {
         headers: [
-          ["Authorization", "Bearer admin"],
+          ["Authorization", `Bearer ${role}`],
           ["Content-Type", "application/json"],
         ],
       }
@@ -57,7 +71,7 @@ export const getServerSideProps = (async ({ query }) => {
       `http://localhost:3000/student/inOneClass?className=${className}`,
       {
         headers: [
-          ["Authorization", "Bearer admin"],
+          ["Authorization", `Bearer ${role}`],
           ["Content-Type", "application/json"],
         ],
       }
@@ -65,7 +79,7 @@ export const getServerSideProps = (async ({ query }) => {
     students = res.ok ? await res.json() : [];
   } else {
     const res = await fetch("http://localhost:3000/student/all", {
-      headers: [["Authorization", "Bearer admin"]],
+      headers: [["Authorization", `Bearer ${role}`]],
     });
     students = res.ok ? await res.json() : [];
   }

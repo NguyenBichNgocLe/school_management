@@ -1,7 +1,9 @@
+import { AuthContext } from "@/contexts/auth.context";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 
 export default function ClassCreationForm() {
+  const { role } = useContext(AuthContext);
   const [className, setClassName] = useState("");
   const router = useRouter();
 
@@ -9,7 +11,7 @@ export default function ClassCreationForm() {
     const res = await fetch("http://localhost:3000/class", {
       method: "POST",
       headers: [
-        ["Authorization", "Bearer admin"],
+        ["Authorization", `Bearer ${role}`],
         ["Content-Type", "application/json"],
       ],
       body: JSON.stringify({
@@ -19,7 +21,7 @@ export default function ClassCreationForm() {
 
     const resContent = await res.json();
     if (res.ok) {
-      router.replace("/class");
+      router.replace(`/class?role=${role}`);
       return;
     }
 

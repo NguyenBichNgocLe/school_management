@@ -1,6 +1,7 @@
+import { AuthContext } from "@/contexts/auth.context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 
 interface Student {
   id: string;
@@ -13,17 +14,18 @@ export interface StudentListProps {
 }
 
 export function StudentList(props: StudentListProps) {
+  const { role } = useContext(AuthContext);
   const router = useRouter();
   const [studentSearchString, setStudentSearchString] = useState("");
   const [classNameSearchString, setClassNameSearchString] = useState("");
 
   const submitStudentSearchByName = useCallback(async () => {
-    router.push(`/student?student name=${studentSearchString}`);
+    router.push(`/student?role=${role}&student name=${studentSearchString}`);
     setStudentSearchString("");
   }, [studentSearchString]);
 
   const submitStudentSearchByClassName = useCallback(async () => {
-    router.push(`/student?class name=${classNameSearchString}`);
+    router.push(`/student?role=${role}class name=${classNameSearchString}`);
     setClassNameSearchString("");
   }, [classNameSearchString]);
 
