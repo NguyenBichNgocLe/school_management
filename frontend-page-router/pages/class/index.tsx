@@ -1,7 +1,5 @@
-// import { ClassList } from "@/components/class-list";
 import {
   AuthContext,
-  RoleType,
   UpdateAuthContext,
 } from "@/contexts/auth.context";
 import { Table } from "antd";
@@ -20,7 +18,6 @@ export default function ClassPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
-  const updateAuthContext = useContext(UpdateAuthContext);
 
   const deleteClass = useCallback(
     async (id: string) => {
