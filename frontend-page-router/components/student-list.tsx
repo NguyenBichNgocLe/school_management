@@ -1,75 +1,61 @@
-import Link from "next/link";
+import { AuthContext } from "@/contexts/auth.context";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { Switch } from "antd";
+import { useCallback, useContext, useState } from "react";
 
-interface Student {
-  id: string;
-  studentName: string;
-  className: string;
-}
-
-export interface StudentListProps {
-  initialData: Student[];
-}
-
-export function StudentList(props: StudentListProps) {
+export function StudentList() {
+  const { role } = useContext(AuthContext);
   const router = useRouter();
-  const [studentSearchString, setStudentSearchString] = useState("");
-  const [classNameSearchString, setClassNameSearchString] = useState("");
+  const [searchString, setSearchString] = useState("");
+  const [isSearchByName, setIsSearchByName] = useState(true);
 
-  const submitStudentSearchByName = useCallback(async () => {
-    router.push(`/student?student name=${studentSearchString}`);
-    setStudentSearchString("");
-  }, [studentSearchString]);
-
-  const submitStudentSearchByClassName = useCallback(async () => {
-    router.push(`/student?class name=${classNameSearchString}`);
-    setClassNameSearchString("");
-  }, [classNameSearchString]);
+  const handleSearch = useCallback(async () => {
+    if (isSearchByName) {
+      router.push(`/student?role=${role}&student name=${searchString}`);
+    } else {
+      router.push(`/student?role=${role}&class name=${searchString}`);
+    }
+    setSearchString("");
+  }, [searchString, isSearchByName, role, router]);
 
   return (
-    <div>
+    <div className="flex gap-4 items-center mb-2">
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          submitStudentSearchByName();
+          handleSearch();
         }}
+        className="flex items-center gap-2"
       >
-        <label htmlFor="form--search-by-name">Search</label>
+        <label htmlFor="form--search-input">
+          {isSearchByName ? "Search by Student Name" : "Search by Class Name"}
+        </label>
         <input
-          id="form--search-by-name"
-          className="block border-2 border-black rounded px-2"
+          id="form--search-input"
+          className="block border-2 border-slate-400 rounded px-2"
           type="text"
-          value={studentSearchString}
-          onChange={(e) => setStudentSearchString(e.target.value)}
+          value={searchString}
+          onChange={(e) => setSearchString(e.target.value)}
+          placeholder={`Enter ${
+            isSearchByName ? "student name" : "class name"
+          }`}
         />
-      </form>
+        <button
+          type="submit"
+          className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-700 text-sm"
+        >
+          Search
+        </button>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          submitStudentSearchByClassName();
-        }}
-      >
-        <label htmlFor="form--search-by-class">Search by class name</label>
-        <input
-          id="form--search-by-class"
-          className="block border-2 border-black rounded px-2"
-          type="text"
-          value={classNameSearchString}
-          onChange={(e) => setClassNameSearchString(e.target.value)}
-        />
+        <div>
+          <Switch
+            checked={isSearchByName}
+            onChange={() => setIsSearchByName(!isSearchByName)}
+            checkedChildren="N"
+            unCheckedChildren="C"
+          />
+        </div>
       </form>
-
-      <ul>
-        {props.initialData.map((s, index) => (
-          <Link key={`student-${index}`} href={`student/${s.id}`}>
-            <li className="hover:bg-slate-400">
-              {s.className} - {s.studentName}
-            </li>
-          </Link>
-        ))}
-      </ul>
     </div>
   );
 }
