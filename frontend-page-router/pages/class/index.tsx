@@ -1,10 +1,14 @@
 // import { ClassList } from "@/components/class-list";
-import { AuthContext } from "@/contexts/auth.context";
+import {
+  AuthContext,
+  RoleType,
+  UpdateAuthContext,
+} from "@/contexts/auth.context";
 import { Table } from "antd";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 
 interface Class {
   id: string;
@@ -16,6 +20,25 @@ export default function ClassPage({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
+  const updateAuthContext = useContext(UpdateAuthContext);
+
+  const deleteClass = useCallback(
+    async (id: string) => {
+      const res = await fetch(`http://localhost:3000/class/${id}`, {
+        method: "DELETE",
+        headers: [["Authorization", `Bearer ${role}`]],
+      });
+
+      if (!res.ok) {
+        const resContent = await res.json();
+        alert(resContent.devMessage);
+        return;
+      }
+
+      router.replace(router.asPath);
+    },
+    [role, router]
+  );
 
   useEffect(() => {
     if (role == null) {
@@ -36,7 +59,21 @@ export default function ClassPage({
       render: (_: any, record: Class) => (
         <div className="flex gap-2">
           <button className="px-3 py-1 rounded border bg-blue-400 hover:bg-blue-600">
-            <Link href={{pathname: `/class/${record.id}`}}>Details</Link>
+            <Link href={{ pathname: `/class/${record.id}` }}>Details</Link>
+          </button>
+          <button className="px-3 py-1 rounded border bg-green-300 hover:bg-green-500">
+            <Link href={{ pathname: `/class/update/${record.id}` }}>
+              Update
+            </Link>
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              deleteClass(record.id);
+            }}
+            className="px-3 py-1 rounded border bg-red-400 hover:bg-red-600"
+          >
+            Delete
           </button>
         </div>
       ),

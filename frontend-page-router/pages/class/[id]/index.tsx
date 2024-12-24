@@ -1,4 +1,6 @@
 import { GetStaticPaths, GetStaticProps } from "next";
+import { Avatar } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 
 interface Class {
   id: string;
@@ -11,8 +13,24 @@ interface PageProps {
 
 export default function Page({ schoolClass }: PageProps) {
   return (
-    <div>
-      {schoolClass.id} - {schoolClass.className}
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="text-3xl font-bold mb-8 text-center">
+        Class Information
+      </div>
+
+      <div className="flex flex-row items-center bg-white p-6 rounded shadow-md max-w-xl w-full">
+        <div className="mr-6">
+          <Avatar size={64} icon={<UserOutlined />} />
+        </div>
+        <div>
+          <div className="text-lg font-semibold text-gray-700">
+            Class ID: <span className="font-normal">{schoolClass.id}</span>
+          </div>
+          <div className="text-lg font-semibold text-gray-700 mt-2">
+            Class name: <span className="font-normal">{schoolClass.className}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

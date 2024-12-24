@@ -3,7 +3,7 @@ import { AuthContext } from "@/contexts/auth.context";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { Table } from "antd";
 
 interface Student {
@@ -17,6 +17,24 @@ export default function Page({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
+
+  const deleteStudent = useCallback(
+    async (id: string) => {
+      const res = await fetch(`http://localhost:3000/student/${id}`, {
+        method: "DELETE",
+        headers: [["Authorization", `Bearer ${role}`]],
+      });
+
+      if (!res.ok) {
+        const resContent = await res.json();
+        alert(resContent.devMessage);
+        return;
+      }
+
+      router.replace(router.asPath);
+    },
+    [role, router]
+  );
 
   useEffect(() => {
     if (role == null) {
@@ -44,32 +62,26 @@ export default function Page({
           <button className="px-3 py-1 rounded border bg-blue-400 hover:bg-blue-600">
             <Link href={{ pathname: `/student/${record.id}` }}>Details</Link>
           </button>
+          <button className="px-3 py-1 rounded border bg-green-300 hover:bg-green-500">
+            <Link href={{ pathname: `/student/update/${record.id}` }}>
+              Update
+            </Link>
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              deleteStudent(record.id);
+            }}
+            className="px-3 py-1 rounded border bg-red-400 hover:bg-red-600"
+          >
+            Delete
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    // <div>
-    //   <h1 className="text-2xl font-bold">All students</h1>
-    //   <div className="flex justify-start">
-    //     <Link
-    //       href={"/student/create"}
-    //       className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-900"
-    //     >
-    //       Create New Student
-    //     </Link>
-    //   </div>
-    //   <div className="flex justify-start mt-2">
-    //     <Link
-    //       href={"/"}
-    //       className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-900"
-    //     >
-    //       Back to Main Page
-    //     </Link>
-    //   </div>
-    //   <StudentList initialData={students} />
-    // </div>
     <div className="flex flex-col items-center justify-center h-screen">
       <h1 className="flex justify-center text-2xl font-bold mb-4">
         All Students

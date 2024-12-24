@@ -1,23 +1,25 @@
 import { AuthContext } from "@/contexts/auth.context";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { useCallback, useContext, useState } from "react";
 
-export default function StudentCreationForm() {
+export default function StudentUpdateForm() {
   const { role } = useContext(AuthContext);
-  const [studentName, setStudentName] = useState("");
   const [className, setClassName] = useState("");
+  const [studentName, setStudentName] = useState("");
   const router = useRouter();
 
-  const submitStudentCreationForm = useCallback(async () => {
-    const res = await fetch("http://localhost:3000/student", {
-      method: "POST",
+  const id = router.query["id"];
+
+  const submitStudentUpdateForm = useCallback(async () => {
+    const res = await fetch(`http://localhost:3000/student/${id}`, {
+      method: "PATCH",
       headers: [
         ["Authorization", `Bearer ${role}`],
         ["Content-Type", "application/json"],
       ],
       body: JSON.stringify({
-        studentName,
-        className,
+        studentName: studentName === "" ? undefined : studentName,
+        className: className === "" ? undefined : className,
       }),
     });
 
@@ -28,29 +30,28 @@ export default function StudentCreationForm() {
     }
 
     alert(resContent.devMessage);
-  }, [studentName, className]);
+  }, [id, studentName, className, role, router]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <h1 className="flex justify-center text-2xl font-bold mb-4">
-        Create A New Student
+        Update Student Information
       </h1>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          submitStudentCreationForm();
+          submitStudentUpdateForm();
         }}
       >
         <label htmlFor="form--student-name">Student name</label>
         <input
           id="form--student-name"
-          className="block w-full border-2 border-black rounded px-2 py-1 mb-2"
           name="studentName"
           type="text"
           value={studentName}
           onChange={(e) => setStudentName(e.target.value)}
+          className="block w-full border-2 border-black rounded px-2 py-1 mb-2"
         />
-
         <label htmlFor="form--class-name">Class name</label>
         <input
           id="form--class-name"
@@ -60,11 +61,10 @@ export default function StudentCreationForm() {
           value={className}
           onChange={(e) => setClassName(e.target.value)}
         />
-
         <input
           type="submit"
-          value="Create Student"
-          className="flex justify-end bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-900"
+          value="Update Student"
+          className="flex justify-end bg-green-500 text-white px-4 py-2 rounded hover:bg-green-900"
         />
       </form>
     </div>
