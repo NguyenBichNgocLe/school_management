@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect } from "react";
 import { Table } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 
 interface Student {
   id: string;
@@ -17,6 +18,10 @@ export default function Page({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
+
+  const reloadPage = () => {
+    router.push(`/student?role=${role}`);
+  };
 
   const deleteStudent = useCallback(
     async (id: string) => {
@@ -82,10 +87,19 @@ export default function Page({
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="flex justify-center text-2xl font-bold mb-4">
-        All Students
-      </h1>
+    <div className="flex flex-col gap-4 items-center justify-center h-screen">
+      <div className="flex items-center gap-2">
+        <h1 className="flex justify-center text-2xl font-bold">
+          All Students
+        </h1>
+        <button
+          onClick={reloadPage}
+          className="flex items-center p-2 hover:bg-gray-200 active:bg-gray-300 rounded"
+        >
+          <ReloadOutlined style={{ fontSize: "12px" }} />
+        </button>
+      </div>
+
       <div className="mb-4">
         <button className="px-6 py-3 rounded bg-blue-500 text-white hover:bg-blue-700 mx-2">
           <Link href={{ pathname: "/student/create" }}>Create New Student</Link>
