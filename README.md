@@ -13,9 +13,3 @@
 - View a specific student/class by clicking on their name in the student/class list.
 - Search students by providing a string.
 - Filter students by class name.
-
-## Future Improvements
-- Update a student information (frontend).
-- Update a class information (frontend).
-- Delete a student (frontend).
-- Delete a class (frontend).
