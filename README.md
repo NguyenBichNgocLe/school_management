@@ -8,8 +8,12 @@
 ## Functionalities
 - View all classes that are available in the system.
 - View all students that are available in the system.
-- Create a new class.
-- Create a new student.
+- Create a new class (admin, principal).
+- Create a new student (admin, teacher).
 - View a specific student/class by clicking on their name in the student/class list.
 - Search students by providing a string.
 - Filter students by class name.
+- Update a student (admin, teacher).
+- Delete a student (admin, teacher).
+- Update a class (admin, principal).
+- Delete a class (admin, principal).
