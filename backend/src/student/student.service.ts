@@ -26,8 +26,11 @@ export class StudentService {
             throw new NotFoundException('Student not found.');
         if (updateStudentDto.className && !this.classRepo.isExistedClass(updateStudentDto.className))
             throw new NotFoundException(`Class ${updateStudentDto.className} not found.`);
-        if (updateStudentDto.studentName && this.studentRepo.isDuplicatedName(updateStudentDto.studentName))
-            throw new BadRequestException('Student name must be unique.');
+        if(updateStudentDto.studentName) {
+            const existedStudentName = this.studentRepo.getByStudentName(updateStudentDto.studentName);
+            if(existedStudentName && existedStudentName.id !== id)
+                throw new BadRequestException('Student name must be unique.');
+        }
 
         return this.studentRepo.save({ ...student, ...updateStudentDto });
     }

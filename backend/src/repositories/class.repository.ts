@@ -22,6 +22,10 @@ export class ClassRepository {
         return ClassRepository.DATA.find((c) => c.id === id);
     }
 
+    public getByClassName(className: string): Class | null {
+        return ClassRepository.DATA.find((c) => c.className.toLowerCase() === className.toLowerCase());
+    }
+
     public addClass(className: string): Class {
         const newClass = { className, id: ClassRepository.NEXT_ID_VALUE };
         ClassRepository.DATA.push(newClass);

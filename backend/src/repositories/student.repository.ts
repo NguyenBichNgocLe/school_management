@@ -27,6 +27,10 @@ export class StudentRepository {
         return StudentRepository.DATA.filter((student) => student.className.toLowerCase() === className.toLowerCase());
     }
 
+    public getByStudentName(studentName: string): Student | null {
+        return StudentRepository.DATA.find(student => student.studentName.toLowerCase() === studentName.toLowerCase());
+    }
+
     public searchStudentsByName(searchString: string): Student[] {
         return StudentRepository.DATA.filter(student => student.studentName.toLowerCase().includes(searchString.toLowerCase()));
     }

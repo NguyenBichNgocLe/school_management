@@ -32,7 +32,9 @@ export class ClassService {
         const foundClass = this.classRepo.getById(id);
         if (!foundClass)
             throw new NotFoundException(`Class with ID ${id} not found.`);
-        if (this.classRepo.isDuplicatedName(className))
+
+        const existedClassName = this.classRepo.getByClassName(className);
+        if (existedClassName && existedClassName.id !== id)
             throw new BadRequestException('Class name must be unique.');
 
         this.studentRepo
