@@ -5,7 +5,10 @@ import { UserOutlined } from "@ant-design/icons";
 interface Student {
   id: string;
   studentName: string;
-  className: string;
+  cls: {
+    id: number;
+    className: string;
+  };
 }
 
 interface PageProps {
@@ -28,10 +31,11 @@ export default function Page({ student }: PageProps) {
             Student ID: <span className="font-normal">{student.id}</span>
           </div>
           <div className="text-lg font-semibold text-gray-700 mt-2">
-            Student name: <span className="font-normal">{student.studentName}</span>
+            Student name:{" "}
+            <span className="font-normal">{student.studentName}</span>
           </div>
           <div className="text-lg font-semibold text-gray-700 mt-2">
-            Class: <span className="font-normal">{student.className}</span>
+            Class: <span className="font-normal">{student.cls.className}</span>
           </div>
         </div>
       </div>

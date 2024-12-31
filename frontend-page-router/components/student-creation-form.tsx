@@ -1,6 +1,11 @@
 import { AuthContext } from "@/contexts/auth.context";
 import { useRouter } from "next/navigation";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+
+interface StudentClass {
+  id: number;
+  className: string;
+}
 
 export default function StudentCreationForm() {
   const { role } = useContext(AuthContext);
@@ -8,7 +13,24 @@ export default function StudentCreationForm() {
   const [className, setClassName] = useState("");
   const router = useRouter();
 
+  const [classes, setClasses] = useState<StudentClass[]>([]);
+  useEffect(() => {
+    fetch("http://localhost:3000/class/all", {
+      headers: [["Authorization", `Bearer ${role}`]],
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((classes) => setClasses(classes));
+  }, [setClasses]);
+
   const submitStudentCreationForm = useCallback(async () => {
+    const classId = classes.find(
+      (cls) => cls.className.toLowerCase() === className.toLowerCase()
+    )?.id;
+
+    if (classId == null) {
+      return alert("The input class does not exist");
+    }
+
     const res = await fetch("http://localhost:3000/student", {
       method: "POST",
       headers: [
@@ -17,7 +39,7 @@ export default function StudentCreationForm() {
       ],
       body: JSON.stringify({
         studentName,
-        className,
+        classId,
       }),
     });
 

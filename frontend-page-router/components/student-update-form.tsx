@@ -1,6 +1,11 @@
 import { AuthContext } from "@/contexts/auth.context";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+
+interface StudentClass {
+  id: number;
+  className: string;
+}
 
 export default function StudentUpdateForm() {
   const { role } = useContext(AuthContext);
@@ -8,9 +13,29 @@ export default function StudentUpdateForm() {
   const [studentName, setStudentName] = useState("");
   const router = useRouter();
 
+  const [classes, setClasses] = useState<StudentClass[]>([]);
+  useEffect(() => {
+    fetch("http://localhost:3000/class/all", {
+      headers: [["Authorization", `Bearer ${role}`]],
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((classes) => setClasses(classes));
+  }, [setClasses]);
+
   const id = router.query["id"];
 
   const submitStudentUpdateForm = useCallback(async () => {
+    let classId = null;
+    if (className !== "") {
+      classId = classes.find(
+        (cls) => cls.className.toLowerCase() === className.toLowerCase()
+      )?.id;
+
+      if (classId == null) {
+        return alert("The input class does not exist");
+      }
+    }
+
     const res = await fetch(`http://localhost:3000/student/${id}`, {
       method: "PATCH",
       headers: [
@@ -19,7 +44,7 @@ export default function StudentUpdateForm() {
       ],
       body: JSON.stringify({
         studentName: studentName === "" ? undefined : studentName,
-        className: className === "" ? undefined : className,
+        classId: classId == null ? undefined : classId,
       }),
     });
 
