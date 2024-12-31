@@ -19,7 +19,7 @@ export class EveryExceptionFilter implements ExceptionFilter {
             const errorResponse: ErrorResponse = {
                 errorCode: exception.getResponse()["error"],
                 devMessage: exception.message,
-                path: request.route?.path ?? "unknown",
+                path: request.route?.path ?? "",
                 data: {
                     routeParam: request.params,
                     query: request.query,

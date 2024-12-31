@@ -1,4 +1,4 @@
-import { IsNotIn, isNotIn, IsOptional, IsString, Length } from "class-validator";
+import { IsNumber, IsOptional, IsString, Length, Min } from "class-validator";
 
 export class UpdateStudentDTO {
     @IsOptional()
@@ -7,7 +7,7 @@ export class UpdateStudentDTO {
     studentName?: string;
 
     @IsOptional()
-    @IsString({ message: 'Class name must be a string.' })
-    @Length(3, 50, { message: 'Class name must be between 3 and 50 characters.' })
-    className?: string;
+    @IsNumber({}, { message: 'Class ID must be a number.' })
+    @Min(1, { message: 'Class ID must be a positive number.' })
+    classId?: number;
 }

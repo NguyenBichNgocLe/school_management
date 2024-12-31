@@ -1,57 +1,78 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ClassRepository } from 'src/repositories/class.repository';
-import { StudentRepository } from 'src/repositories/student.repository';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Class } from './entities/class.entity';
+import { Repository } from 'typeorm';
+import { CreateUpdateClassDTO } from './dto/create-update-class.dto';
+import { Student } from 'src/student/entities/student.entity';
 
 @Injectable()
 export class ClassService {
-    constructor(
-        private classRepo: ClassRepository,
-        private studentRepo: StudentRepository
-    ) { }
+  constructor(
+    @InjectRepository(Class)
+    private readonly classRepository: Repository<Class>,
 
-    create(className: string) {
-        if (this.classRepo.isDuplicatedName(className))
-            throw new BadRequestException('Class name must be unique.');
+    @InjectRepository(Student)
+    private readonly studentRepository: Repository<Student>,
+  ) {}
 
-        const newClass = this.classRepo.addClass(className);
-        return newClass;
-    }
+  async create(createClassDto: CreateUpdateClassDTO) {
+    const existedName = await this.classRepository
+      .createQueryBuilder('cls')
+      .where('LOWER(cls.className) = LOWER(:className)', {
+        className: createClassDto.className,
+      })
+      .getOne();
+    if (existedName)
+      throw new BadRequestException('Class name must be unique.');
 
-    getClassById(id: number) {
-        const foundClass = this.classRepo.getById(id);
-        if (!foundClass)
-            throw new NotFoundException(`Class with ID ${id} not found.`);
-        return foundClass;
-    }
+    const newClass = await this.classRepository.create(createClassDto);
+    return await this.classRepository.save(newClass);
+  }
 
-    getAllClasses() {
-        return this.classRepo.getAll();
-    }
+  async getClassById(id: number) {
+    const foundClass = await this.classRepository.findOne({ where: { id } });
+    if (!foundClass)
+      throw new NotFoundException(`Class with ID ${id} not found.`);
+    return foundClass;
+  }
 
-    update(id: number, className: string) {
-        const foundClass = this.classRepo.getById(id);
-        if (!foundClass)
-            throw new NotFoundException(`Class with ID ${id} not found.`);
+  async getAllClasses() {
+    return await this.classRepository.find();
+  }
 
-        const existedClassName = this.classRepo.getByClassName(className);
-        if (existedClassName && existedClassName.id !== id)
-            throw new BadRequestException('Class name must be unique.');
+  async update(id: number, updateClassDto: CreateUpdateClassDTO) {
+    const foundClass = await this.classRepository.findOne({ where: { id } });
+    if (!foundClass)
+      throw new NotFoundException(`Class with ID ${id} not found.`);
 
-        this.studentRepo
-            .getByClassName(foundClass.className)
-            .forEach(student => this.studentRepo.save({ ...student, className }));
+    const existedName = await this.classRepository
+      .createQueryBuilder('cls')
+      .where('LOWER(cls.className) = LOWER(:className)', {
+        className: updateClassDto.className,
+      })
+      .getOne();
+    if (existedName && existedName.id !== id)
+      throw new BadRequestException('Class name must be unique.');
 
-        return this.classRepo.save({ ...foundClass, className });
-    }
+    return this.classRepository.save({ id, ...updateClassDto });
+  }
 
-    delete(id: number) {
-        const foundClass = this.classRepo.getById(id);
-        if (!foundClass)
-            throw new NotFoundException(`Class with ID ${id} not found.`);
+  async delete(id: number) {
+    const foundClass = await this.classRepository.findOne({ where: { id } });
+    if (!foundClass)
+      throw new NotFoundException(`Class with ID ${id} not found.`);
 
-        if(this.studentRepo.anyStudentInClass(foundClass.className))
-            throw new BadRequestException('Cannot delete a class with students.');
+    const studentInClass = await this.studentRepository.findOne({
+      where: { cls: { id } },
+    });
+    if (studentInClass)
+      throw new BadRequestException('Cannot delete a class with students.');
 
-        return this.classRepo.deleteClass(id);
-    }
+    await this.classRepository.delete(id);
+    return foundClass;
+  }
 }
