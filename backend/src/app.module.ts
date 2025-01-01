@@ -11,6 +11,7 @@ import { Class } from './class/entities/class.entity';
 import { Student } from './student/entities/student.entity';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import * as path from 'node:path';
 
 const configService = new ConfigService();
 @Module({
@@ -28,7 +29,7 @@ const configService = new ConfigService();
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
+      autoSchemaFile: path.join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       formatError: (err) => {
         return {
