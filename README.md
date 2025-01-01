@@ -1,6 +1,6 @@
 # Simple School Management System
 
-## This Backend Version of School Management System has NOT work with frontend yet
+## This Backend Version of the School Management System has NOT worked with frontend yet
 
 ## Usage
 1. Clone the repository
