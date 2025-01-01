@@ -9,6 +9,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Class } from './class/entities/class.entity';
 import { Student } from './student/entities/student.entity';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import * as path from 'node:path';
 
 const configService = new ConfigService();
 @Module({
@@ -24,6 +27,19 @@ const configService = new ConfigService();
       entities: [Class, Student],
       synchronize: false,
     }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: path.join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+      formatError: (err) => {
+        return {
+          message: err.message,
+          path: err.path,
+          errorCode: err.extensions.errorCode,
+          data: err.extensions.data,
+        };
+      },
+    }),
     ClassModule,
     StudentModule,
   ],
@@ -36,4 +52,4 @@ const configService = new ConfigService();
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

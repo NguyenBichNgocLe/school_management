@@ -1,4 +1,7 @@
 # Simple School Management System
+
+## This Backend Version of School Management System has NOT work with frontend yet
+
 ## Usage
 1. Clone the repository
 2. Change the directory to the backend folder, `npm install` to install dependencies, then `npm run start:dev` or `npm run start` to start the server.
