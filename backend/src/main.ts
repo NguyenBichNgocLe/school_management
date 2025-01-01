@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { EveryExceptionFilter } from './filters/exceptions.filter';
+import { GraphqlExceptionFilter } from './filters/graphql.exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
-  app.useGlobalFilters(new EveryExceptionFilter());
+  app.useGlobalFilters(new GraphqlExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

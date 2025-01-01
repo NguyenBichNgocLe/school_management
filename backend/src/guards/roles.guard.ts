@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { GqlExecutionContext } from "@nestjs/graphql";
 import { Roles } from "src/decorators/roles.decorator";
 
 @Injectable()
@@ -11,12 +12,17 @@ export class RolesGuard implements CanActivate {
         if (!roles) {
             return true;
         }
-        const request = context.switchToHttp().getRequest();
-        const role = (request.headers.authorization ?? "").split(' ')[1];
-        if (roles.includes(role))
+
+        const gqlContext = GqlExecutionContext.create(context);
+        const { headers } = gqlContext.getContext().req;
+
+        const role = (headers.authorization ?? "").split(' ')[1];
+
+        if(roles.includes(role)) {
             return true;
-        else {
+        } else {
             throw new UnauthorizedException('You are not authorized to do this action.');
         }
+        
     }
 }
