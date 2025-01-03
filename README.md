@@ -1,6 +1,6 @@
 # Simple School Management System
 
-## This Backend Version of the School Management System has NOT worked with frontend yet
+## The Frontend can mostly work with the new Backend, except **SEARCH** function in Student pages
 
 ## Usage
 1. Clone the repository
