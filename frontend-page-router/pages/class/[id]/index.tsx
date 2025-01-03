@@ -64,10 +64,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
         authorization: `Bearer admin`,
       },
     },
-    fetchPolicy: "network-only",
+    fetchPolicy: "no-cache",
   });
 
-  const schoolClasses = data?.getAllClass || [];
+  const schoolClasses = data?.getAllClass ?? [];
 
   return {
     paths: schoolClasses.map((c: Class) => ({
@@ -80,7 +80,6 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
-
   const { data, error } = await client.query({
     query: GET_CLASS_USING_ID,
     variables: { id: parseInt(params?.id as string) },
@@ -89,6 +88,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
         authorization: `Bearer admin`,
       },
     },
+    fetchPolicy: "no-cache",
   });
 
   if (error != null) {
@@ -101,7 +101,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
 
   return {
     props: {
-      schoolClass: data?.getClassById,
+      schoolClass: data?.getClassById ?? null,
     },
     revalidate: 60,
   };

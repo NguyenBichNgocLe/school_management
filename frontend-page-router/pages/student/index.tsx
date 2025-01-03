@@ -6,6 +6,8 @@ import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect } from "react";
 import { Table } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
+import { gql, useMutation } from "@apollo/client";
+import { client } from "@/graphql";
 
 interface Student {
   id: string;
@@ -13,32 +15,63 @@ interface Student {
   className: string;
 }
 
+const GET_ALL_STUDENTS = gql`
+  query {
+    getAllStudents {
+      id
+      studentName
+      cls {
+        className
+      }
+    }
+  }
+`;
+
+const DELETE_A_STUDENT = gql`
+  mutation DeleteStudent($id: Int!) {
+    deleteStudent(id: $id) {
+      id
+      studentName
+      cls {
+        className
+      }
+    }
+  }
+`;
+
 export default function Page({
   students,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
+  const [deleteStudent] = useMutation(DELETE_A_STUDENT);
 
   const reloadPage = () => {
     router.push(`/student?role=${role}`);
   };
 
-  const deleteStudent = useCallback(
+  const submitDeleteStudent = useCallback(
     async (id: string) => {
-      const res = await fetch(`http://localhost:3000/student/${id}`, {
-        method: "DELETE",
-        headers: [["Authorization", `Bearer ${role}`]],
-      });
-
-      if (!res.ok) {
-        const resContent = await res.json();
-        alert(resContent.devMessage);
-        return;
+      try {
+        await deleteStudent({
+          variables: { id: parseInt(id as string) },
+          context: {
+            headers: {
+              authorization: `Bearer ${role}`,
+            },
+          },
+          refetchQueries: [GET_ALL_STUDENTS],
+        });
+        router.replace(router.asPath);
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(error.message);
+        } else {
+          alert("An unexpected error orccurred.");
+        }
       }
-
-      router.replace(router.asPath);
     },
-    [role, router]
+    [role, router, deleteStudent]
   );
 
   useEffect(() => {
@@ -75,7 +108,7 @@ export default function Page({
           <button
             onClick={(e) => {
               e.preventDefault();
-              deleteStudent(record.id);
+              submitDeleteStudent(record.id);
             }}
             className="px-3 py-1 rounded border bg-red-400 hover:bg-red-600"
           >
@@ -89,9 +122,7 @@ export default function Page({
   return (
     <div className="flex flex-col gap-4 items-center justify-center h-screen">
       <div className="flex items-center gap-2">
-        <h1 className="flex justify-center text-2xl font-bold">
-          All Students
-        </h1>
+        <h1 className="flex justify-center text-2xl font-bold">All Students</h1>
         <button
           onClick={reloadPage}
           className="flex items-center p-2 hover:bg-gray-200 active:bg-gray-300 rounded"
@@ -125,9 +156,6 @@ export const getServerSideProps = (async ({ query }) => {
   const studentName = query["student name"];
   const className = query["class name"];
 
-  console.log(studentName);
-  console.log(className);
-
   if (studentName != null) {
     const res = await fetch(
       `http://localhost:3000/student/usingName?searchString=${studentName}`,
@@ -151,10 +179,19 @@ export const getServerSideProps = (async ({ query }) => {
     );
     students = res.ok ? await res.json() : [];
   } else {
-    const res = await fetch("http://localhost:3000/student/all", {
-      headers: [["Authorization", `Bearer ${role}`]],
+    const { data } = await client.query({
+      query: GET_ALL_STUDENTS,
+      context: {
+        headers: {
+          authorization: `Bearer ${role}`,
+        },
+      },
+      fetchPolicy: "no-cache",
     });
-    students = res.ok ? await res.json() : [];
+    students = data.getAllStudents.map((student: any) => ({
+      ...student,
+      className: student.cls?.className || "No Class",
+    }));
   }
 
   return { props: { students } };

@@ -1,4 +1,6 @@
 import { AuthContext } from "@/contexts/auth.context";
+import { client } from "@/graphql";
+import { gql, useMutation } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { useCallback, useContext, useEffect, useState } from "react";
 
@@ -7,19 +9,50 @@ interface StudentClass {
   className: string;
 }
 
+const GET_ALL_CLASSES = gql`
+  query {
+    getAllClass {
+      id
+      className
+    }
+  }
+`;
+
+const ADD_STUDENT = gql`
+  mutation AddStudent($studentName: String!, $classId: Int!) {
+    addStudent(
+      createStudentDto: { studentName: $studentName, classId: $classId }
+    ) {
+      id
+      studentName
+      cls {
+        id
+      }
+    }
+  }
+`;
+
 export default function StudentCreationForm() {
   const { role } = useContext(AuthContext);
   const [studentName, setStudentName] = useState("");
   const [className, setClassName] = useState("");
   const router = useRouter();
+  const [addStudent] = useMutation(ADD_STUDENT);
 
   const [classes, setClasses] = useState<StudentClass[]>([]);
+
   useEffect(() => {
-    fetch("http://localhost:3000/class/all", {
-      headers: [["Authorization", `Bearer ${role}`]],
-    })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((classes) => setClasses(classes));
+    client
+      .query({
+        query: GET_ALL_CLASSES,
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+        fetchPolicy: "no-cache",
+      })
+      .then(({ data }) => setClasses(data.getAllClass));
   }, [setClasses]);
 
   const submitStudentCreationForm = useCallback(async () => {
@@ -31,26 +64,24 @@ export default function StudentCreationForm() {
       return alert("The input class does not exist");
     }
 
-    const res = await fetch("http://localhost:3000/student", {
-      method: "POST",
-      headers: [
-        ["Authorization", `Bearer ${role}`],
-        ["Content-Type", "application/json"],
-      ],
-      body: JSON.stringify({
-        studentName,
-        classId,
-      }),
-    });
-
-    const resContent = await res.json();
-    if (res.ok) {
+    try {
+      await addStudent({
+        variables: { studentName, classId },
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+      });
       router.replace(`/student?role=${role}`);
-      return;
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("An unexpected error orccurred.");
+      }
     }
-
-    alert(resContent.devMessage);
-  }, [studentName, className]);
+  }, [studentName, className, classes, router]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">

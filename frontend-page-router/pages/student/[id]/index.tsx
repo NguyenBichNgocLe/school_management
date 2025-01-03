@@ -1,6 +1,8 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import { gql } from "@apollo/client";
+import { client } from "@/graphql";
 
 interface Student {
   id: string;
@@ -14,6 +16,28 @@ interface Student {
 interface PageProps {
   student: Student;
 }
+
+const GET_ALL_STUDENTS = gql`
+  query {
+    getAllStudents {
+      id
+      studentName
+      cls {
+        className
+      }
+    }
+  }
+`;
+
+const GET_STUDENT_USING_ID = gql`
+  query getStudentUsingID($id: Int!) {
+    getStudentById(id: $id) {
+      id
+      studentName
+      cls { id className }
+    }
+  }
+`;
 
 export default function Page({ student }: PageProps) {
   return (
@@ -44,12 +68,19 @@ export default function Page({ student }: PageProps) {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const students: Student[] = await fetch("http://localhost:3000/student/all", {
-    headers: [["Authorization", "Bearer admin"]],
-  }).then((res) => res.json());
+  const { data } = await client.query({
+    query: GET_ALL_STUDENTS,
+    context: {
+      headers: {
+        authorization: `Bearer admin`,
+      },
+    },
+    fetchPolicy: "no-cache",
+  });
+  const students = data?.getAllStudents ?? [];
 
   return {
-    paths: students.map((student) => ({
+    paths: students.map((student: Student) => ({
       params: {
         id: String(student.id),
       },
@@ -59,16 +90,30 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
-  const student: Student = await fetch(
-    `http://localhost:3000/student/usingID/${params?.id}`,
-    {
-      headers: [["Authorization", "Bearer admin"]],
-    }
-  ).then((res) => res.json());
+  const { data, error } = await client.query({
+    query: GET_STUDENT_USING_ID,
+    variables: { id: parseInt(params?.id as string) },
+    context: {
+      headers: {
+        authorization: `Bearer admin`,
+      },
+    },
+    fetchPolicy: "no-cache",
+  });
+
+  if(error) {
+    alert(error.message);
+    return {
+      props: { student: null},
+      revalidate: 60,
+    };
+  }
 
   return {
     props: {
-      student,
+      student: {
+        ...data.getStudentById,
+      },
     },
     revalidate: 60,
   };

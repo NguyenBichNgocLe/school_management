@@ -1,4 +1,6 @@
 import { AuthContext } from "@/contexts/auth.context";
+import { client } from "@/graphql";
+import { gql, useMutation } from "@apollo/client";
 import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect, useState } from "react";
 
@@ -7,19 +9,49 @@ interface StudentClass {
   className: string;
 }
 
+const GET_ALL_CLASSES = gql`
+  query {
+    getAllClass {
+      id
+      className
+    }
+  }
+`;
+
+const UPDATE_STUDENT = gql`
+  mutation UpdateStudent($id: Int!, $classId: Int, $studentName: String) {
+    updateStudent(
+      id: $id
+      updateStudentDto: { classId: $classId, studentName: $studentName }
+    ) {
+      id
+      studentName
+      cls { className }
+    }
+  }
+`;
+
 export default function StudentUpdateForm() {
   const { role } = useContext(AuthContext);
   const [className, setClassName] = useState("");
   const [studentName, setStudentName] = useState("");
   const router = useRouter();
+  const [updateStudent] = useMutation(UPDATE_STUDENT);
 
   const [classes, setClasses] = useState<StudentClass[]>([]);
+
   useEffect(() => {
-    fetch("http://localhost:3000/class/all", {
-      headers: [["Authorization", `Bearer ${role}`]],
-    })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((classes) => setClasses(classes));
+    client
+      .query({
+        query: GET_ALL_CLASSES,
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+        fetchPolicy: "no-cache",
+      })
+      .then(({ data }) => setClasses(data.getAllClass));
   }, [setClasses]);
 
   const id = router.query["id"];
@@ -36,26 +68,28 @@ export default function StudentUpdateForm() {
       }
     }
 
-    const res = await fetch(`http://localhost:3000/student/${id}`, {
-      method: "PATCH",
-      headers: [
-        ["Authorization", `Bearer ${role}`],
-        ["Content-Type", "application/json"],
-      ],
-      body: JSON.stringify({
-        studentName: studentName === "" ? undefined : studentName,
-        classId: classId == null ? undefined : classId,
-      }),
-    });
-
-    const resContent = await res.json();
-    if (res.ok) {
+    try {
+      await updateStudent({
+        variables: {
+          id: parseInt(id as string),
+          classId: classId === null ? undefined : classId,
+          studentName: studentName === "" ? undefined : studentName,
+        },
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+      });
       router.replace(`/student?role=${role}`);
-      return;
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("An unexpected error orccurred.");
+      }
     }
-
-    alert(resContent.devMessage);
-  }, [id, studentName, className, role, router]);
+  }, [id, studentName, className, role, router, updateStudent]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">

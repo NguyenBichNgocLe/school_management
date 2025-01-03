@@ -12,7 +12,7 @@ interface Class {
   className: string;
 }
 
-export const GET_ALL_CLASSES = gql`
+const GET_ALL_CLASSES = gql`
   query {
     getAllClass {
       id
@@ -132,7 +132,7 @@ export const getServerSideProps = (async (context) => {
         authorization: `Bearer ${role}`,
       },
     },
-    fetchPolicy: "network-only",
+    fetchPolicy: "no-cache",
   });
 
   return {
