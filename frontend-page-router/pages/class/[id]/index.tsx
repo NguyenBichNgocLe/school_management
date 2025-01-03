@@ -1,6 +1,8 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import { gql } from "@apollo/client";
+import { client } from "@/graphql";
 
 interface Class {
   id: string;
@@ -8,8 +10,26 @@ interface Class {
 }
 
 interface PageProps {
-  schoolClass: Class;
+  schoolClass: Class | null;
 }
+
+export const GET_ALL_CLASSES = gql`
+  query {
+    getAllClass {
+      id
+      className
+    }
+  }
+`;
+
+export const GET_CLASS_USING_ID = gql`
+  query getClassUsingID($id: Int!) {
+    getClassById(id: $id) {
+      id
+      className
+    }
+  }
+`;
 
 export default function Page({ schoolClass }: PageProps) {
   return (
@@ -24,10 +44,11 @@ export default function Page({ schoolClass }: PageProps) {
         </div>
         <div>
           <div className="text-lg font-semibold text-gray-700">
-            Class ID: <span className="font-normal">{schoolClass.id}</span>
+            Class ID: <span className="font-normal">{schoolClass?.id}</span>
           </div>
           <div className="text-lg font-semibold text-gray-700 mt-2">
-            Class name: <span className="font-normal">{schoolClass.className}</span>
+            Class name:{" "}
+            <span className="font-normal">{schoolClass?.className}</span>
           </div>
         </div>
       </div>
@@ -36,12 +57,20 @@ export default function Page({ schoolClass }: PageProps) {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const schooClasses: Class[] = await fetch("http://localhost:3000/class/all", {
-    headers: [["Authorization", "Bearer admin"]],
-  }).then((res) => res.json());
+  const { data } = await client.query({
+    query: GET_ALL_CLASSES,
+    context: {
+      headers: {
+        authorization: `Bearer admin`,
+      },
+    },
+    fetchPolicy: "network-only",
+  });
+
+  const schoolClasses = data?.getAllClass || [];
 
   return {
-    paths: schooClasses.map((c) => ({
+    paths: schoolClasses.map((c: Class) => ({
       params: {
         id: String(c.id),
       },
@@ -51,16 +80,28 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
-  const schoolClass: Class = await fetch(
-    `http://localhost:3000/class/usingID/${params?.id}`,
-    {
-      headers: [["Authorization", "Bearer admin"]],
-    }
-  ).then((res) => res.json());
+
+  const { data, error } = await client.query({
+    query: GET_CLASS_USING_ID,
+    variables: { id: parseInt(params?.id as string) },
+    context: {
+      headers: {
+        authorization: `Bearer admin`,
+      },
+    },
+  });
+
+  if (error != null) {
+    alert(error.message);
+    return {
+      props: { schoolClass: null },
+      revalidate: 60,
+    };
+  }
 
   return {
     props: {
-      schoolClass,
+      schoolClass: data?.getClassById,
     },
     revalidate: 60,
   };

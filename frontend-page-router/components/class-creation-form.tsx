@@ -1,32 +1,43 @@
 import { AuthContext } from "@/contexts/auth.context";
+import { gql, useMutation } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { useCallback, useContext, useState } from "react";
+
+const ADD_CLASS = gql`
+  mutation AddClass($className: String!) {
+    addClass(createClassDto: { className: $className }) {
+      id
+      className
+    }
+  }
+`;
 
 export default function ClassCreationForm() {
   const { role } = useContext(AuthContext);
   const [className, setClassName] = useState("");
   const router = useRouter();
+  const [addClass] = useMutation(ADD_CLASS);
 
   const submitClassCreationForm = useCallback(async () => {
-    const res = await fetch("http://localhost:3000/class", {
-      method: "POST",
-      headers: [
-        ["Authorization", `Bearer ${role}`],
-        ["Content-Type", "application/json"],
-      ],
-      body: JSON.stringify({
-        className,
-      }),
-    });
+    try {
+      await addClass({
+        variables: { className },
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+      });
 
-    const resContent = await res.json();
-    if (res.ok) {
       router.replace(`/class?role=${role}`);
-      return;
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("An unexpected error orccurred.");
+      }
     }
-
-    alert(resContent.devMessage);
-  }, [role, className, router]);
+  }, [role, className, router, addClass]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">

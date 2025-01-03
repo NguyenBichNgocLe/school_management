@@ -1,7 +1,6 @@
-import {
-  AuthContext,
-  UpdateAuthContext,
-} from "@/contexts/auth.context";
+import { AuthContext, UpdateAuthContext } from "@/contexts/auth.context";
+import { client } from "@/graphql";
+import { gql, useMutation } from "@apollo/client";
 import { Table } from "antd";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Link from "next/link";
@@ -13,28 +12,53 @@ interface Class {
   className: string;
 }
 
+export const GET_ALL_CLASSES = gql`
+  query {
+    getAllClass {
+      id
+      className
+    }
+  }
+`;
+
+const DELETE_A_CLASS = gql`
+  mutation DeleteClass($id: Int!) {
+    deleteClass(id: $id) {
+      id
+      className
+    }
+  }
+`;
+
 export default function ClassPage({
   classes,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
+  const [deleteClass] = useMutation(DELETE_A_CLASS);
 
-  const deleteClass = useCallback(
+  const submitDeleteClass = useCallback(
     async (id: string) => {
-      const res = await fetch(`http://localhost:3000/class/${id}`, {
-        method: "DELETE",
-        headers: [["Authorization", `Bearer ${role}`]],
-      });
+      try {
+        await deleteClass({
+          variables: { id: parseInt(id as string) },
+          context: {
+            headers: {
+              authorization: `Bearer ${role}`,
+            },
+          },
+        });
 
-      if (!res.ok) {
-        const resContent = await res.json();
-        alert(resContent.devMessage);
-        return;
+        router.replace(router.asPath);
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(error.message);
+        } else {
+          alert("An unexpected error orccurred.");
+        }
       }
-
-      router.replace(router.asPath);
     },
-    [role, router]
+    [role, router, deleteClass]
   );
 
   useEffect(() => {
@@ -66,7 +90,7 @@ export default function ClassPage({
           <button
             onClick={(e) => {
               e.preventDefault();
-              deleteClass(record.id);
+              submitDeleteClass(record.id);
             }}
             className="px-3 py-1 rounded border bg-red-400 hover:bg-red-600"
           >
@@ -101,13 +125,21 @@ export default function ClassPage({
 
 export const getServerSideProps = (async (context) => {
   const { role } = context.query;
-  let classes: Class[] = [];
-
-  const res = await fetch("http://localhost:3000/class/all", {
-    headers: [["Authorization", `Bearer ${role}`]],
+  const { data } = await client.query({
+    query: GET_ALL_CLASSES,
+    context: {
+      headers: {
+        authorization: `Bearer ${role}`,
+      },
+    },
+    fetchPolicy: "network-only",
   });
-  classes = res.ok ? await res.json() : [];
-  return { props: { classes } };
+
+  return {
+    props: {
+      classes: data.getAllClass as Class[],
+    },
+  };
 }) satisfies GetServerSideProps<{
   classes: Class[];
 }>;

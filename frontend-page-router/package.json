@@ -11,7 +11,9 @@
   "dependencies": {
     "@ant-design/cssinjs": "^1.22.1",
     "@ant-design/icons": "^5.5.2",
+    "@apollo/client": "^3.12.4",
     "antd": "^5.22.6",
+    "graphql": "^16.10.0",
     "next": "15.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
