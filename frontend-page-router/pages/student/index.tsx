@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useCallback, useContext, useEffect } from "react";
 import { Table } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { client } from "@/graphql";
 
 interface Student {
@@ -18,6 +18,30 @@ interface Student {
 const GET_ALL_STUDENTS = gql`
   query {
     getAllStudents {
+      id
+      studentName
+      cls {
+        className
+      }
+    }
+  }
+`;
+
+const GET_STUDENTS_IN_SAME_CLASS = gql`
+  query GetStudentsInSameClass($className: String!) {
+    getStudentInSameClass(className: $className) {
+      id
+      studentName
+      cls {
+        className
+      }
+    }
+  }
+`;
+
+const FILTER_STUDENT_BY_NAME = gql`
+  query FilterStudents($searchString: String!) {
+    filterStudents(searchString: $searchString) {
       id
       studentName
       cls {
@@ -142,7 +166,7 @@ export default function Page({
       <StudentList />
       <Table
         columns={columns}
-        dataSource={students.map((stu) => ({ ...stu, key: stu.id }))}
+        dataSource={students?.map((stu) => ({ ...stu, key: stu.id })) || []}
         pagination={{ pageSize: 5 }}
       />
     </div>
@@ -156,42 +180,64 @@ export const getServerSideProps = (async ({ query }) => {
   const studentName = query["student name"];
   const className = query["class name"];
 
-  if (studentName != null) {
-    const res = await fetch(
-      `http://localhost:3000/student/usingName?searchString=${studentName}`,
-      {
-        headers: [
-          ["Authorization", `Bearer ${role}`],
-          ["Content-Type", "application/json"],
-        ],
-      }
-    );
-    students = res.ok ? await res.json() : [];
-  } else if (className != null) {
-    const res = await fetch(
-      `http://localhost:3000/student/inOneClass?className=${className}`,
-      {
-        headers: [
-          ["Authorization", `Bearer ${role}`],
-          ["Content-Type", "application/json"],
-        ],
-      }
-    );
-    students = res.ok ? await res.json() : [];
-  } else {
-    const { data } = await client.query({
-      query: GET_ALL_STUDENTS,
-      context: {
-        headers: {
-          authorization: `Bearer ${role}`,
+  try {
+    if (studentName != null) {
+      const { data } = await client.query({
+        query: FILTER_STUDENT_BY_NAME,
+        variables: { searchString: studentName },
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
         },
-      },
-      fetchPolicy: "no-cache",
-    });
-    students = data.getAllStudents.map((student: any) => ({
-      ...student,
-      className: student.cls?.className || "No Class",
-    }));
+        fetchPolicy: "no-cache",
+        errorPolicy: "all",
+      });
+
+      students =
+        data?.filterStudents?.map((student: any) => ({
+          ...student,
+          className: student.cls?.className || "No Class",
+        })) || [];
+    } else if (className != null) {
+      const { data } = await client.query({
+        query: GET_STUDENTS_IN_SAME_CLASS,
+        variables: { className },
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+        fetchPolicy: "no-cache",
+        errorPolicy: "all",
+      });
+
+      students =
+        data?.getStudentInSameClass?.map((student: any) => ({
+          ...student,
+          className: student.cls?.className || "No Class",
+        })) || [];
+    } else {
+      const { data } = await client.query({
+        query: GET_ALL_STUDENTS,
+        context: {
+          headers: {
+            authorization: `Bearer ${role}`,
+          },
+        },
+        fetchPolicy: "no-cache",
+        errorPolicy: "all",
+      });
+
+      students =
+        data?.getAllStudents?.map((student: any) => ({
+          ...student,
+          className: student.cls?.className || "No Class",
+        })) || [];
+    }
+  } catch (error) {
+    console.error("Error fetching students: ", error);
+    students = [];
   }
 
   return { props: { students } };
