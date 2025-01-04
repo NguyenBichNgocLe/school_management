@@ -1,22 +1,34 @@
 import { AuthContext, UpdateAuthContext } from "@/contexts/auth.context";
 import { client } from "@/graphql";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { Table } from "antd";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 interface Class {
   id: string;
   className: string;
 }
 
+interface PaginatedClassResponse {
+  data: Class[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+}
+
 const GET_ALL_CLASSES = gql`
-  query {
-    getAllClass {
-      id
-      className
+  query GetAllClasses($page: Int!, $limit: Int!) {
+    getAllClass(page: $page, limit: $limit) {
+      data {
+        id
+        className
+      }
+      total
+      currentPage
+      totalPages
     }
   }
 `;
@@ -31,11 +43,20 @@ const DELETE_A_CLASS = gql`
 `;
 
 export default function ClassPage({
-  classes,
+  initialData,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { role } = useContext(AuthContext);
   const [deleteClass] = useMutation(DELETE_A_CLASS);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  useEffect(() => {
+    if (!currentPage) {
+      return;
+    }
+
+    router.replace(`/class?role=${role}&page=${currentPage}`);
+  }, [currentPage, role]);
 
   const submitDeleteClass = useCallback(
     async (id: string) => {
@@ -49,7 +70,11 @@ export default function ClassPage({
           },
         });
 
-        router.replace(router.asPath);
+        if (currentPage > 1 && initialData.data.length === 1) {
+          setCurrentPage(currentPage - 1);
+        } else {
+          router.replace(router.asPath);
+        }
       } catch (error) {
         if (error instanceof Error) {
           alert(error.message);
@@ -58,7 +83,7 @@ export default function ClassPage({
         }
       }
     },
-    [role, router, deleteClass]
+    [initialData, role, deleteClass, currentPage, setCurrentPage]
   );
 
   useEffect(() => {
@@ -116,17 +141,32 @@ export default function ClassPage({
       </div>
       <Table
         columns={columns}
-        dataSource={classes.map((cls) => ({ ...cls, key: cls.id }))}
-        pagination={{ pageSize: 5 }}
+        dataSource={initialData.data.map((cls) => ({
+          ...cls,
+          key: cls.id,
+        }))}
+        pagination={{
+          current: currentPage,
+          pageSize: 5,
+          total: initialData.total,
+          onChange: (page) => setCurrentPage(page),
+        }}
       />
     </div>
   );
 }
 
-export const getServerSideProps = (async (context) => {
-  const { role } = context.query;
+export const getServerSideProps: GetServerSideProps<{
+  initialData: PaginatedClassResponse;
+}> = async (context) => {
+  const role = context.query.role;
+  const page = context.query.page ? parseInt(context.query.page as string) : 1;
   const { data } = await client.query({
     query: GET_ALL_CLASSES,
+    variables: {
+      page,
+      limit: 5,
+    },
     context: {
       headers: {
         authorization: `Bearer ${role}`,
@@ -137,9 +177,7 @@ export const getServerSideProps = (async (context) => {
 
   return {
     props: {
-      classes: data.getAllClass as Class[],
+      initialData: data.getAllClass,
     },
   };
-}) satisfies GetServerSideProps<{
-  classes: Class[];
-}>;
+};
