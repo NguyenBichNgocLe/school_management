@@ -6,7 +6,6 @@ import { GraphqlExceptionFilter } from './filters/graphql.exceptions.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: true,
-    logger: ['debug'],
   });
   app.useGlobalFilters(new GraphqlExceptionFilter());
   app.useGlobalPipes(
