@@ -1,12 +1,11 @@
 # Simple School Management System
 
-## The Frontend can mostly work with the new Backend, except **SEARCH** function in Student pages
-
 ## Usage
 1. Clone the repository
-2. Change the directory to the backend folder, `npm install` to install dependencies, then `npm run start:dev` or `npm run start` to start the server.
-3. After the server is started, open a new terminal, and change the directory to the `frontend-page-router/` folder.
-4. Start the front end by `npm run dev`.
+2. Set up your DB to work with the backend. A script is provided to pull and start the needed docker image in `./scripts/`. Just change the dir to `scripts` and either run the ps1 file if using powershell or the sh file if using linux.
+3. Change the directory to the backend folder, `npm install` to install dependencies, then `npm run start:dev` or `npm run start` to start the server.
+4. After the server is started, open a new terminal, and change the directory to the `frontend-page-router/` folder.
+5. `npm install` to install dependencies. Start the front end by `npm run dev`.
 
 ## Functionalities
 - View all classes that are available in the system.
