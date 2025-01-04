@@ -9,6 +9,7 @@ import { Class } from './entities/class.entity';
 import { ClassService } from './class.service';
 import { CreateUpdateClassDTO } from './dto/create-update-class.dto';
 import { Roles } from 'src/decorators/roles.decorator';
+import { PaginatedClassResponse } from './dto/paginated.class.response';
 
 @Resolver(() => Class)
 export class ClassResolver {
@@ -16,10 +17,18 @@ export class ClassResolver {
     private readonly classService: ClassService,
   ) {}
 
+  // @Roles(['admin', 'principal', 'teacher'])
+  // @Query((returns) => [Class])
+  // async getAllClass(): Promise<Class[]> {s
+  //   return await this.classService.getAllClasses();
+  // }
   @Roles(['admin', 'principal', 'teacher'])
-  @Query((returns) => [Class])
-  async getAllClass(): Promise<Class[]> {
-    return await this.classService.getAllClasses();
+  @Query((returns) => PaginatedClassResponse)
+  async getAllClass(
+    @Args('page', {type: () => Int, nullable: true, defaultValue: 1}) page: number,
+    @Args('limit', {type: () => Int, nullable: true, defaultValue: 5}) limit: number,
+  ): Promise<PaginatedClassResponse> {
+    return await this.classService.getAllClasses(page, limit);
   }
 
   @Roles(['admin', 'principal', 'teacher'])

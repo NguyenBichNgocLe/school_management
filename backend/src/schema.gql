@@ -26,9 +26,16 @@ type Mutation {
   updateStudent(id: Int!, updateStudentDto: UpdateStudentDTO!): Student!
 }
 
+type PaginatedClassResponse {
+  currentPage: Int!
+  data: [Class!]!
+  total: Int!
+  totalPages: Int!
+}
+
 type Query {
   filterStudents(searchString: String!): [Student!]!
-  getAllClass: [Class!]!
+  getAllClass(limit: Int = 5, page: Int = 1): PaginatedClassResponse!
   getAllStudents: [Student!]!
   getClassById(id: Int!): Class!
   getStudentById(id: Int!): Student!

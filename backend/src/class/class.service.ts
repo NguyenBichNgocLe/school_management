@@ -8,6 +8,7 @@ import { Class } from './entities/class.entity';
 import { Repository } from 'typeorm';
 import { CreateUpdateClassDTO } from './dto/create-update-class.dto';
 import { Student } from 'src/student/entities/student.entity';
+import { PaginatedClassResponse } from './dto/paginated.class.response';
 
 @Injectable()
 export class ClassService {
@@ -40,8 +41,26 @@ export class ClassService {
     return foundClass;
   }
 
-  async getAllClasses() {
-    return await this.classRepository.find();
+  // async getAllClasses() {
+  //   return await this.classRepository.find();
+  // }
+  async getAllClasses(page: number, limit: number): Promise<PaginatedClassResponse> {
+    if(page < 1 || limit < 1) {
+      throw new BadRequestException('Page and limit must be positive integers.');
+    }
+
+    const [ classes, total ] = await this.classRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { id: 'ASC' },
+    });
+
+    return {
+      data: classes,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async update(id: number, updateClassDto: CreateUpdateClassDTO) {

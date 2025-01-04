@@ -12,6 +12,7 @@ import { Student } from './student/entities/student.entity';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import * as path from 'node:path';
+import { PaginatedClassResponse } from './class/dto/paginated.class.response';
 
 const configService = new ConfigService();
 @Module({
@@ -24,7 +25,7 @@ const configService = new ConfigService();
       username: configService.get('DB_USER', 'postgres'),
       password: configService.get('DB_PASSWORD', 'Password0.'),
       database: configService.get('DB_NAME', 'postgres'),
-      entities: [Class, Student],
+      entities: [Class, Student, PaginatedClassResponse],
       synchronize: false,
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
